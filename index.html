@@ -27,8 +27,8 @@
             </a>
             <nav>
                 <ul>
-                    <li><a href="#home" id="nav-home">Beranda</a></li>
-                    <li><a href="#packages" id="nav-packages">Paket</a></li>
+                    <li><a href="#home" id="nav-home">Home</a></li>
+                    <li><a href="#packages" id="nav-packages">Package</a></li>
                     <li><a href="https://github.com/T4n-Labs/vur" target="_blank">GitHub <i class="ph ph-arrow-square-out"></i></a></li>
                 </ul>
             </nav>
@@ -41,29 +41,29 @@
         <!-- Loading View -->
         <div id="view-loading" class="loading">
             <div class="spinner"></div>
-            <p class="mt-4">Mengambil indeks paket...</p>
+            <p class="mt-4">Fetching the package index...</p>
         </div>
 
         <!-- Home View -->
         <div id="view-home" class="hidden">
             <section class="hero">
                 <h1>Void User Repository</h1>
-                <p>Indeks paket komunitas yang cepat, minimalis, dan modern.</p>
+                <p>A fast, minimalist, and modern community package index.</p>
                 
                 <div class="search-container">
                     <i class="ph ph-magnifying-glass search-icon"></i>
-                    <input type="text" id="home-search" class="search-input" placeholder="Cari paket (nama, deskripsi, kategori)...">
+                    <input type="text" id="home-search" class="search-input" placeholder="Search for packages (name, description, category)...">
                 </div>
             </section>
 
             <section class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="stat-total">0</div>
-                    <div class="stat-label">Total Paket</div>
+                    <div class="stat-label">Total Package</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-recent">0</div>
-                    <div class="stat-label">Paket Terbaru</div>
+                    <div class="stat-label">Latest Package</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">Void Linux</div>
@@ -74,18 +74,18 @@
             <section class="detail-section mt-4">
                 <div class="flex flex-col gap-4">
                     <div class="flex justify-between items-center" style="flex-wrap: wrap; gap:10px;">
-                        <h2>Paket Terbaru</h2>
-                        <a href="#packages" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Lihat Semua</a>
+                        <h2>Latest Package</h2>
+                        <a href="#packages" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">See All</a>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="recent-table">
                         <thead>
                             <tr>
-                                <th>Nama</th>
-                                <th>Versi</th>
-                                <th>Kategori</th>
-                                <th>Deskripsi</th>
+                                <th>Name</th>
+                                <th>Version</th>
+                                <th>Category</th>
+                                <th>Description</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,16 +100,16 @@
         <div id="view-packages" class="hidden">
             <div class="flex flex-col gap-4 mb-4">
                 <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
-                    <h2>Indeks Paket</h2>
+                    <h2>Package Index</h2>
                     <div class="search-container" style="max-width: 100%; margin: 0; flex: 1;">
                         <i class="ph ph-funnel search-icon"></i>
-                        <input type="text" id="list-search" class="search-input" placeholder="Filter daftar...">
+                        <input type="text" id="list-search" class="search-input" placeholder="List filters...">
                     </div>
                 </div>
 
                 <!-- CATEGORY FILTER -->
                 <div class="category-filters" id="category-filters">
-                    <button class="filter-btn active" data-cat="all">Semua</button>
+                    <button class="filter-btn active" data-cat="all">All</button>
                     <button class="filter-btn" data-cat="core">Core</button>
                     <button class="filter-btn" data-cat="extra">Extra</button>
                     <button class="filter-btn" data-cat="multilib">Multilib</button>
@@ -120,10 +120,10 @@
                 <table id="packages-table">
                     <thead>
                         <tr>
-                            <th>Nama</th>
-                            <th>Versi</th>
-                            <th>Kategori</th>
-                            <th>Deskripsi</th>
+                            <th>Name</th>
+                            <th>Version</th>
+                            <th>Category</th>
+                            <th>Description</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,14 +133,14 @@
             </div>
             <div id="packages-empty" class="empty-state hidden">
                 <i class="ph ph-ghost" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                <p>Tidak ada paket yang cocok dengan filter atau pencarian Anda.</p>
+                <p>No packages match your filters or search.</p>
             </div>
         </div>
 
         <!-- Package Detail View -->
         <div id="view-detail" class="hidden">
             <button class="btn btn-outline" onclick="window.location.hash='packages'" style="margin-bottom: 1rem; border: none; padding-left: 0; justify-content: flex-start; min-height: auto;">
-                <i class="ph ph-arrow-left"></i> Kembali ke Daftar
+                <i class="ph ph-arrow-left"></i> Return to List
             </button>
 
             <div id="detail-content">
@@ -153,9 +153,9 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <p>&copy; 2026 VUR Project. Dibuat untuk komunitas Void Linux.</p>
+            <p>&copy; 2026 VUR Project. Made for the Void Linux community.</p>
             <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">
-                Data bersumber dari <a href="https://github.com/T4n-Labs/vur" target="_blank">T4n-Labs/vur</a>
+                Data sourced from <a href="https://github.com/T4n-Labs/vur" target="_blank">T4n-Labs/vur</a>
             </p>
         </div>
     </footer>

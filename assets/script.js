@@ -45,7 +45,7 @@ const app = {
         // Ambil Data Awal
         try {
             const response = await fetch(this.urls.index);
-            if (!response.ok) throw new Error('Gagal mengambil data');
+            if (!response.ok) throw new Error('Failed to retrieve data');
             this.data = await response.json();
             
             // Update Statistik
@@ -59,7 +59,7 @@ const app = {
             document.getElementById('view-loading').innerHTML = `
                 <div style="color: #ff6b6b;">
                     <i class="ph ph-warning-circle" style="font-size: 3rem;"></i>
-                    <p class="mt-4">Gagal memuat indeks paket.</p>
+                    <p class="mt-4">Failed to load package index.</p>
                     <button class="btn btn-primary mt-4" onclick="location.reload()">Coba Lagi</button>
                 </div>
             `;
@@ -141,7 +141,7 @@ const app = {
         tbody.innerHTML = '';
 
         if (packages.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">Tidak ada data.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No data.</td></tr>`;
             return;
         }
 
@@ -153,7 +153,7 @@ const app = {
                 <td><span class="pkg-name">${pkg.name}</span></td>
                 <td><span class="pkg-ver">${pkg.version || 'N/A'}</span></td>
                 <td><span class="pkg-cat">${pkg.category || 'unknown'}</span></td>
-                <td style="color: var(--text-muted);">${pkg.description || 'Tidak ada deskripsi'}</td>
+                <td style="color: var(--text-muted);">${pkg.description || 'No description'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -169,9 +169,9 @@ const app = {
             content.innerHTML = `
                 <div class="empty-state">
                     <i class="ph ph-package" style="font-size: 3rem; color: var(--text-muted);"></i>
-                    <h2 class="mt-4">Paket Tidak Ditemukan</h2>
-                    <p>Paket "${name}" tidak ada dalam indeks.</p>
-                    <button class="btn btn-primary mt-4" onclick="window.location.hash='packages'">Kembali</button>
+                    <h2 class="mt-4">Package Not Found</h2>
+                    <p>Package "${name}" is not in the index.</p>
+                    <button class="btn btn-primary mt-4" onclick="window.location.hash='packages'">Return</button>
                 </div>
             `;
             view.classList.remove('hidden');
@@ -180,11 +180,12 @@ const app = {
 
         const catNamePath = pkg.category ? `${pkg.category}/${pkg.name}` : pkg.name;
         const folderUrl = `${this.urls.treeBase}/${catNamePath}`;
-        const installCmd = `git clone ${this.urls.repoBase}\ncd vur/${catNamePath}\n./xbps-src pkg`;
+        const installCmd = `git clone ${this.urls.repoBase}\ncd vur/${catNamePath}\n./xbps-src pkg ${pkg.name}`;
+        const LetX = `letx get ${pkg.name}\nletx pkg ${pkg.name}\nletx install ${pkg.name}`;
 
         const versionDisplay = pkg.version || 'N/A';
-        const descDisplay = pkg.description || 'Tidak ada deskripsi tersedia';
-        const maintainerDisplay = pkg.maintainer || 'Tidak diketahui';
+        const descDisplay = pkg.description || 'No description available';
+        const maintainerDisplay = pkg.maintainer || 'Unknown';
 
         content.innerHTML = `
             <div class="detail-header">
@@ -192,32 +193,41 @@ const app = {
                     <h1>${pkg.name}</h1>
                     <div class="detail-meta">
                         <span class="pkg-cat">${pkg.category || 'unknown'}</span>
-                        <span class="meta-item"><i class="ph ph-tag"></i> Versi: <strong style="color: var(--text)">${versionDisplay}</strong></span>
+                        <span class="meta-item"><i class="ph ph-tag"></i> Version: <strong style="color: var(--text)">${versionDisplay}</strong></span>
                         <span class="meta-item"><i class="ph ph-user"></i> Maintainer: <strong style="color: var(--text)">${maintainerDisplay}</strong></span>
                     </div>
                 </div>
                 <div class="detail-actions">
                     <a href="${folderUrl}" target="_blank" class="btn btn-outline">
-                        <i class="ph ph-github-logo"></i> Folder Sumber
+                        <i class="ph ph-github-logo"></i> Source Folder
                     </a>
                 </div>
             </div>
 
             <div class="detail-section">
-                <h2>Deskripsi</h2>
+                <h2>Description</h2>
                 <p style="font-size: 1.1rem;">${descDisplay}</p>
             </div>
 
             <div class="detail-section">
-                <h2>Instruksi Instalasi</h2>
+                <h2>Installation Instructions</h2>
                 <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">
-                    Bangun paket dari sumber menggunakan xbps-src.
+                    Build the package from source using xbps-src.
                 </p>
                 <div class="code-block">
                     <button class="copy-btn" onclick="app.copyToClipboard(this)">
                         <i class="ph ph-copy"></i> Salin
                     </button>
                     <pre><code>${installCmd}</code></pre>
+                </div>
+                <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">
+                    Build the package from source using Let-X(Coming Soon).
+                </p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="app.copyToClipboard(this)">
+                        <i class="ph ph-copy"></i> Salin
+                    </button>
+                    <pre><code>${LetX}</code></pre>
                 </div>
             </div>
         `;
