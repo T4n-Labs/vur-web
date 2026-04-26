@@ -212,6 +212,7 @@ const app = {
             <div class="detail-section">
                 <h2>Installation Instructions</h2>
                 <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">
+                    1. First Option,
                     Build the package from source using xbps-src.
                 </p>
                 <div class="code-block">
@@ -221,7 +222,8 @@ const app = {
                     <pre><code>${installCmd}</code></pre>
                 </div>
                 <p class="mb-4" style="color: var(--text-muted); font-size: 0.9rem;">
-                    Build the package from source using Let-X(Coming Soon).
+                    2. Second Option,
+                    Build the package from source using Let-X(ON GOING).
                 </p>
                 <div class="code-block">
                     <button class="copy-btn" onclick="app.copyToClipboard(this)">
