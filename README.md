@@ -37,10 +37,12 @@ Kategori yang tersedia:
 
 Project ini dirilis dengan lisensi **MIT License**.
 
+---
+
 ### **Maintained by**
 
-@T4n Labs
-* https://github.com/T4n-Labs
+<div align=center>
 
-@Gh0sT4n
-* https://github.com/gh0st4n
+@[T4n Labs](https://github.com/T4n-Labs) - @[Gh0sT4n](https://github.com/gh0st4n)
+
+</div>
