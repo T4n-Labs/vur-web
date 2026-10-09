@@ -2,57 +2,108 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- FIX: "maximum-scale=1.0, user-scalable=no" dihapus — memblokir zoom
+         adalah anti-pola aksesibilitas (WCAG). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VUR - Void User Repository</title>
-    
+
+    <meta name="description" content="Void User Repository | Community Repository">
+    <!-- Warna address bar di browser mobile -->
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- FIX: favicon sebelumnya href="assets/" (folder kosong → broken).
+         Sementara pakai logo.jpg; idealnya sediakan .ico / .png 32x32. -->
+    <link rel="icon" type="image/jpeg" href="assets/logo.png">
+
+    <!-- FIX: og:site_name sebelumnya "Gh0sT4n Portfolio" (sisa project lain).
+         Open Graph dilengkapi agar preview share media sosial benar. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="VUR - Void User Repository">
+    <meta property="og:title" content="VUR - Void User Repository">
+    <meta property="og:description" content="A fast, minimalist, and modern community package index for Void Linux.">
+    <meta property="og:url" content="https://vur.t4nlabs.web.id/">
+    <meta property="og:image" content="https://vur.t4nlabs.web.id/assets/logo.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "VUR - Void User Repository",
+      "url": "https://vur.t4nlabs.web.id/"
+    }
+    </script>
+
     <!-- Font Google: Inter untuk UI, JetBrains Mono untuk kode -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Ikon (Phosphor Icons) -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <!-- Link ke file CSS eksternal -->
+
+    <!-- Ikon: Phosphor SAJA. Font Awesome dihapus (redundan — 2 library dimuat
+         hanya demi 1 ikon GitHub). Versi di-pin agar class ikon tidak berubah
+         mendadak; update versinya secara sadar. -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-    <!-- Header / Navbar -->
+    <!-- Pesan untuk pengunjung tanpa JavaScript -->
+    <noscript>
+        <p class="noscript-msg">This site requires JavaScript to load the package index.</p>
+    </noscript>
+
+    <!-- ================= HEADER / NAVBAR ================= -->
     <header>
         <div class="container flex justify-between items-center">
-            <a href="#home" class="logo" onclick="app.router()">
-                <i class="ph ph-terminal-window"></i>
+            <!-- FIX: onclick="app.router()" dihapus — event 'hashchange'
+                 sudah otomatis memanggil router. -->
+            <a href="#home" class="logo">
+                <i class="ph ph-terminal-window" aria-hidden="true"></i>
                 VUR <span>Void User Repository</span>
             </a>
             <nav>
                 <ul>
                     <li><a href="#home" id="nav-home">Home</a></li>
                     <li><a href="#packages" id="nav-packages">Package</a></li>
-                    <li><a href="https://github.com/T4n-Labs/vur" target="_blank">GitHub <i class="ph ph-arrow-square-out"></i></a></li>
+                    <!-- FIX: markup lama menaruh <a> KOSONG di dalam <i> sehingga
+                         link tidak bisa diklik. Struktur dibalik + rel="noopener".
+                         href, label & ikon di-update OTOMATIS oleh script.js
+                         (REPO_CONFIG) → saat migrasi ke GitLab TIDAK perlu
+                         mengedit file ini. -->
+                    <li>
+                        <a class="nav-repo" href="https://github.com/T4n-Labs/vur"
+                           data-repo-link
+                           target="_blank" rel="noopener noreferrer"
+                           aria-label="Source repository">
+                            <i class="ph ph-github-logo" data-repo-icon aria-hidden="true"></i>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="container" style="flex: 1; padding-top: 2rem; padding-bottom: 2rem;">
-        
-        <!-- Loading View -->
+    <!-- ================= MAIN ================= -->
+    <!-- FIX: inline style dipindah ke class .main-content di CSS -->
+    <main class="container main-content">
+
+        <!-- Loading View (tampil sebelum data berhasil dimuat) -->
         <div id="view-loading" class="loading">
             <div class="spinner"></div>
             <p class="mt-4">Fetching the package index...</p>
         </div>
 
-        <!-- Home View -->
+        <!-- ================= HOME VIEW ================= -->
         <div id="view-home" class="hidden">
             <section class="hero">
                 <h1>Void User Repository</h1>
                 <p>A fast, minimalist, and modern community package index.</p>
-                
+
                 <div class="search-container">
-                    <i class="ph ph-magnifying-glass search-icon"></i>
-                    <input type="text" id="home-search" class="search-input" placeholder="Search for packages (name, description, category)...">
+                    <i class="ph ph-magnifying-glass search-icon" aria-hidden="true"></i>
+                    <input type="text" id="home-search" class="search-input"
+                           placeholder="Search for packages (name, description, category)..."
+                           aria-label="Search packages">
                 </div>
             </section>
 
@@ -61,22 +112,23 @@
                     <div class="stat-value" id="stat-total">0</div>
                     <div class="stat-label">Total Package</div>
                 </div>
+                <!-- FIX: stat "Latest Package" (hardcoded angka 5) menyesatkan.
+                     Diubah menjadi jumlah kategori, dihitung dari data. -->
                 <div class="stat-card">
-                    <div class="stat-value" id="stat-recent">0</div>
-                    <div class="stat-label">Latest Package</div>
+                    <div class="stat-value" id="stat-categories">0</div>
+                    <div class="stat-label">Categories</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">Void Linux</div>
+                    <div class="stat-value stat-value--text">Void Linux</div>
                     <div class="stat-label">Distro Target</div>
                 </div>
             </section>
 
             <section class="detail-section mt-4">
-                <div class="flex flex-col gap-4">
-                    <div class="flex justify-between items-center" style="flex-wrap: wrap; gap:10px;">
-                        <h2>Latest Package</h2>
-                        <a href="#packages" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">See All</a>
-                    </div>
+                <div class="flex justify-between items-center list-header">
+                    <h2>Latest Package</h2>
+                    <!-- FIX: inline style → class .btn-sm -->
+                    <a href="#packages" class="btn btn-outline btn-sm">See All</a>
                 </div>
                 <div class="table-container">
                     <table id="recent-table">
@@ -84,83 +136,87 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Version</th>
-                                <th>Category</th>
+                                <!-- class .col-cat: disembunyikan otomatis di
+                                     layar kecil (lihat media query di CSS) -->
+                                <th class="col-cat">Category</th>
                                 <th>Description</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Populated by JS -->
-                        </tbody>
+                        <tbody><!-- Diisi oleh script.js --></tbody>
                     </table>
                 </div>
             </section>
         </div>
 
-        <!-- Packages List View -->
+        <!-- ================= PACKAGES LIST VIEW ================= -->
         <div id="view-packages" class="hidden">
             <div class="flex flex-col gap-4 mb-4">
-                <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                <div class="flex justify-between items-center list-header">
                     <h2>Package Index</h2>
-                    <div class="search-container" style="max-width: 100%; margin: 0; flex: 1;">
-                        <i class="ph ph-funnel search-icon"></i>
-                        <input type="text" id="list-search" class="search-input" placeholder="List filters...">
+                    <!-- FIX: inline style → class .search-inline -->
+                    <div class="search-container search-inline">
+                        <!-- FIX: ikon funnel → magnifying-glass agar konsisten -->
+                        <i class="ph ph-magnifying-glass search-icon" aria-hidden="true"></i>
+                        <input type="text" id="list-search" class="search-input"
+                               placeholder="Filter packages..."
+                               aria-label="Filter packages">
                     </div>
                 </div>
 
-                <!-- CATEGORY FILTER -->
-                <div class="category-filters" id="category-filters">
-                    <button class="filter-btn active" data-cat="all">All</button>
-                    <button class="filter-btn" data-cat="core">Core</button>
-                    <button class="filter-btn" data-cat="extra">Extra</button>
-                    <button class="filter-btn" data-cat="multilib">Multilib</button>
-                </div>
+                <!-- Tombol kategori di-generate OTOMATIS oleh script.js dari
+                     data packages.json — menambah kategori baru di repo tidak
+                     perlu mengedit HTML/JS lagi. -->
+                <div class="category-filters" id="category-filters"></div>
             </div>
-            
+
             <div class="table-container">
                 <table id="packages-table">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Version</th>
-                            <th>Category</th>
+                            <th class="col-cat">Category</th>
                             <th>Description</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Populated by JS -->
-                    </tbody>
+                    <tbody><!-- Diisi oleh script.js --></tbody>
                 </table>
             </div>
+
             <div id="packages-empty" class="empty-state hidden">
-                <i class="ph ph-ghost" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <i class="ph ph-ghost" aria-hidden="true"></i>
                 <p>No packages match your filters or search.</p>
             </div>
         </div>
 
-        <!-- Package Detail View -->
+        <!-- ================= PACKAGE DETAIL VIEW ================= -->
         <div id="view-detail" class="hidden">
-            <button class="btn btn-outline" onclick="window.location.hash='packages'" style="margin-bottom: 1rem; border: none; padding-left: 0; justify-content: flex-start; min-height: auto;">
-                <i class="ph ph-arrow-left"></i> Return to List
+            <!-- FIX: inline style & onclick → class .btn-back + data-action
+                 (ditangani event delegation di script.js) -->
+            <button class="btn btn-outline btn-back" data-action="back" type="button">
+                <i class="ph ph-arrow-left" aria-hidden="true"></i> Return to List
             </button>
 
-            <div id="detail-content">
-                <!-- Populated by JS -->
-            </div>
+            <div id="detail-content"><!-- Diisi oleh script.js --></div>
         </div>
 
     </main>
 
-    <!-- Footer -->
+    <!-- ================= FOOTER ================= -->
     <footer>
         <div class="container">
-            <p>&copy; 2026 VUR Project. Made for the Void Linux community.</p>
-            <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.7;">
-                Data sourced from <a href="https://github.com/T4n-Labs/vur" target="_blank">T4n-Labs/vur</a>
+            <p>&copy; 2026 VUR Project. Made for the Void Linux Community.</p>
+            <!-- FIX: inline style → class .footer-note.
+                 Link & label repo di-update otomatis oleh script.js. -->
+            <p class="footer-note">
+                Data sourced from
+                <a href="https://github.com/T4n-Labs/vur"
+                   data-repo-link data-repo-label
+                   target="_blank" rel="noopener noreferrer">T4n-Labs/vur</a>
             </p>
         </div>
     </footer>
 
-    <!-- Link ke file JavaScript eksternal -->
     <script src="assets/script.js"></script>
 </body>
 </html>
