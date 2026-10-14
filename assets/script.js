@@ -5,20 +5,17 @@
  * ============================================================================
  * CATATAN MAINTENANCE (baca dulu sebelum mengubah):
  *
- *  1) MIGRASI GITHUB → GITLAB
+ *  1) KONFIGURASI REPOSITORY (GITHUB)
  *     Semua URL repo TERPUSAT di REPO_CONFIG di bawah. Link repo di
  *     index.html juga di-update otomatis dari konfigurasi ini (elemen dengan
- *     atribut [data-repo-link], [data-repo-label], [data-repo-icon]).
- *     Saat memindahkan koleksi VUR ke GitLab cukup:
- *       a. ganti provider menjadi 'gitlab'
- *       b. sesuaikan owner / repo / branch bila berubah
- *     Tidak ada URL GitHub lain yang tersebar di file ini maupun index.html.
+ *     atribut [data-repo-link], [data-repo-label]).
+ *     Saat pindah repo / ganti branch / ganti nama owner cukup ubah
+ *     REPO_CONFIG — tidak ada URL GitHub lain yang tersebar di file ini
+ *     maupun di index.html.
  *
- *     Referensi format URL:
- *       GitHub raw : https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<file>
- *       GitLab raw : https://gitlab.com/<owner>/<repo>/-/raw/<branch>/<file>
- *       GitHub web : https://github.com/<owner>/<repo>/tree/<branch>/<path>
- *       GitLab web : https://gitlab.com/<owner>/<repo>/-/tree/<branch>/<path>
+ *     Referensi format URL GitHub:
+ *       raw : https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<file>
+ *       web : https://github.com/<owner>/<repo>/tree/<branch>/<path>
  *
  *  2) SKEMA packages.json (file index paket di repo):
  *     [
@@ -30,34 +27,50 @@
  *         "maintainer": "..."     // opsional
  *       }
  *     ]
- *     Urutan array dianggap "terbaru dulu" (5 baris pertama tampil di Home).
+ *     Urutan array dianggap "terbaru dulu" (paket teratas = terbaru).
  *
  *  3) STRUKTUR FOLDER REPO yang diasumsikan: <category>/<name>/
  *     Jika struktur berubah, cukup edit buildPkgPath().
+ *
+ *  4) TAHUN FOOTER OTOMATIS
+ *     Tahun copyright TIDAK diketik manual di HTML. Semua elemen dengan
+ *     atribut [data-year] di index.html dikosongkan lalu diisi tahun
+ *     berjalan oleh updateFooterYear().
+ *
+ *  5) LIMIT TAMPILAN & PAGINASI
+ *     Angka-angka ini DIATUR DI LIST_CONFIG (bukan di logika render):
+ *       - homeLimit : jumlah paket terbaru di section "Latest Package" (Home)
+ *       - perPage   : jumlah paket per halaman di view Package Index
+ *     Paginasi berlaku untuk SEMUA kondisi: All, per kategori, dan saat
+ *     pencarian aktif (jumlah halaman mengikuti hasil filter).
+ *     Syarat HTML: wajib ada <div id="pagination"></div> di view-packages
+ *     (lihat index.html). Paginasi otomatis disembunyikan bila hasil
+ *     hanya 1 halaman atau kosong.
  * ========================================================================== */
 
 /* ---------------------------------------------------------------------------
  * KONFIGURASI REPOSITORY — SATU-SATUNYA tempat yang perlu di-edit
- * saat migrasi GitHub → GitLab.
+ * saat pindah repo / branch / owner (GitHub).
  * ------------------------------------------------------------------------- */
 const REPO_CONFIG = {
-  provider: "github", // 'github' | 'gitlab'
   owner: "T4n-Labs",
   repo: "vur",
   branch: "main",
   indexFile: "packages.json",
 };
 
+/* ---------------------------------------------------------------------------
+ * KONFIGURASI TAMPILAN — jumlah item & paginasi.
+ * Ubah angka di sini saja; tidak perlu menyentuh logika render.
+ * ------------------------------------------------------------------------- */
+const LIST_CONFIG = {
+  homeLimit: 10, // Home "Latest Package": 10 paket terakhir
+  perPage: 20, // Package Index: 20 paket per halaman (semua filter)
+};
+
 /* Bangun semua URL yang dibutuhkan aplikasi dari REPO_CONFIG. */
 function buildRepoUrls(cfg) {
   const slug = `${cfg.owner}/${cfg.repo}`;
-  if (cfg.provider === "gitlab") {
-    return {
-      web: `https://gitlab.com/${slug}`,
-      raw: `https://gitlab.com/${slug}/-/raw/${cfg.branch}/${cfg.indexFile}`,
-      tree: `https://gitlab.com/${slug}/-/tree/${cfg.branch}`,
-    };
-  }
   return {
     web: `https://github.com/${slug}`,
     raw: `https://raw.githubusercontent.com/${slug}/${cfg.branch}/${cfg.indexFile}`,
@@ -97,13 +110,15 @@ const app = {
   isLoaded: false, // true setelah fetch berhasil
   currentSearch: "", // kata kunci pencarian aktif (lowercase)
   selectedCategory: "all", // kategori filter aktif di view Packages
+  currentPage: 1, // halaman paginasi aktif di view Packages (mulai dari 1)
   urls: buildRepoUrls(REPO_CONFIG),
   baseTitle: document.title,
 
   /* ======================= INIT ======================= */
   init: async function () {
     this.bindGlobalEvents();
-    this.updateRepoLinks(); // isi href/label/ikon repo di index.html
+    this.updateRepoLinks(); // isi href/label repo di index.html
+    this.updateFooterYear(); // tahun copyright footer otomatis [data-year]
 
     try {
       await this.fetchData();
@@ -164,6 +179,7 @@ const app = {
     // ulang oleh router tiap pindah view supaya tidak mismatch.
     const onSearch = debounce(function (e) {
       app.currentSearch = e.target.value.toLowerCase();
+      app.currentPage = 1; // BARU: pencarian berubah → kembali ke halaman 1
       if (e.target.id === "home-search") app.renderRecent();
       else app.renderPackagesList();
     }, 150);
@@ -172,13 +188,23 @@ const app = {
 
     // SATU listener klik (event delegation) untuk semua elemen dinamis:
     //   [data-action]  -> tombol aksi (copy / reload / back)
+    //   .page-btn      -> BARU: tombol paginasi (nomor halaman / panah)
     //   .filter-btn    -> filter kategori
     //   tr[data-pkg]   -> baris tabel -> buka detail paket
-    // FIX: mengganti semua inline onclick="app.xxx()" di HTML.
     document.addEventListener("click", (e) => {
       const actionEl = e.target.closest("[data-action]");
       if (actionEl) {
         this.handleAction(actionEl);
+        return;
+      }
+
+      // BARU: paginasi — pindah halaman lalu scroll ke atas agar
+      // pengguna selalu melihat awal daftar, bukan bagian tengah tabel.
+      const pageBtn = e.target.closest(".page-btn");
+      if (pageBtn && !pageBtn.disabled) {
+        this.currentPage = parseInt(pageBtn.dataset.page, 10);
+        this.renderPackagesList();
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
@@ -191,6 +217,7 @@ const app = {
         // suatu saat tombol berisi elemen lain (ikon, span, dsb.)
         filterBtn.classList.add("active");
         this.selectedCategory = filterBtn.dataset.cat;
+        this.currentPage = 1; // BARU: kategori berubah → kembali ke halaman 1
         this.renderPackagesList();
         return;
       }
@@ -218,12 +245,13 @@ const app = {
     }
   },
 
-  /* Isi link/label/ikon repo di HTML dari konfigurasi — dengan begitu
-   * migrasi GitHub → GitLab tidak menyentuh index.html sama sekali. */
+  /* Isi link/label repo di HTML dari konfigurasi — dengan begitu perubahan
+   * owner/repo/branch tidak menyentuh index.html sama sekali.
+   *
+   * CATATAN: ikon GitHub di index.html bersifat STATIS (project ini hanya
+   * memakai GitHub) sehingga tidak perlu di-update dari JS. */
   updateRepoLinks: function () {
     const label = `${REPO_CONFIG.owner}/${REPO_CONFIG.repo}`;
-    const icon =
-      REPO_CONFIG.provider === "gitlab" ? "ph-gitlab-logo" : "ph-github-logo";
 
     document.querySelectorAll("[data-repo-link]").forEach((a) => {
       a.href = this.urls.web;
@@ -231,8 +259,26 @@ const app = {
     document.querySelectorAll("[data-repo-label]").forEach((el) => {
       el.textContent = label;
     });
-    document.querySelectorAll("[data-repo-icon]").forEach((el) => {
-      el.className = `ph ${icon}`;
+  },
+
+  /* Tahun copyright footer di-generate otomatis dari jam sistem pengunjung —
+   * tidak ada tahun yang diketik manual di HTML. Elemen [data-year]
+   * dikosongkan di index.html; fungsi ini yang mengisinya, sehingga
+   * otomatis berubah tiap tahun baru.
+   *
+   * VARIAN RENTANG TAHUN (mis. tampil "© 2025–2026"):
+   * Ganti isi fungsi ini menjadi:
+   *   const firstYear = 2025; // tahun pertama project VUR
+   *   const now = new Date().getFullYear();
+   *   const label = now > firstYear ? `${firstYear}–${now}` : String(now);
+   *   document.querySelectorAll("[data-year]").forEach((el) => {
+   *     el.textContent = label;
+   *   });
+   */
+  updateFooterYear: function () {
+    const year = String(new Date().getFullYear());
+    document.querySelectorAll("[data-year]").forEach((el) => {
+      el.textContent = year;
     });
   },
 
@@ -261,8 +307,9 @@ const app = {
       document.getElementById("view-packages").classList.remove("hidden");
       document.getElementById("nav-packages").classList.add("active");
       document.title = this.baseTitle;
-      // CATATAN: filter & pencarian direset tiap masik view Packages
-      // (perilaku lama dipertahankan). Hapus baris ini jika ingin persist.
+      // CATATAN: filter, pencarian & halaman paginasi direset tiap masuk
+      // view Packages (perilaku lama dipertahankan). Hapus baris ini jika
+      // ingin state persist saat bolak-balik detail ↔ list.
       this.resetListFilters();
       this.renderPackagesList();
     } else if (hash.startsWith("#package/")) {
@@ -287,6 +334,7 @@ const app = {
   resetListFilters: function () {
     this.currentSearch = "";
     this.selectedCategory = "all";
+    this.currentPage = 1; // BARU: paginasi ikut direset
     document.getElementById("list-search").value = "";
     document
       .querySelectorAll(".filter-btn")
@@ -309,7 +357,8 @@ const app = {
     });
   },
 
-  /* Filter untuk Home: hanya pencarian (tanpa kategori). */
+  /* Home "Latest Package": LIST_CONFIG.homeLimit paket teratas.
+   * Urutan packages.json = terbaru dulu, jadi cukup slice dari depan. */
   renderRecent: function () {
     const q = this.currentSearch;
     const filtered = this.data.filter(
@@ -317,15 +366,96 @@ const app = {
         p.name.toLowerCase().includes(q) ||
         (p.description || "").toLowerCase().includes(q),
     );
-    this.renderTable(filtered.slice(0, 5), "recent-table");
+    this.renderTable(filtered.slice(0, LIST_CONFIG.homeLimit), "recent-table");
   },
 
+  /* BARU: Package Index dengan PAGINASI.
+   * Alur: filter dulu (pencarian + kategori) → hitung total halaman →
+   * clamp halaman aktif → slice sesuai halaman → render tabel + paginasi.
+   * Berlaku untuk semua kategori (All/core/extra/...) karena kategori
+   * hanya bagian dari filter, bukan logika terpisah. */
   renderPackagesList: function () {
     const filtered = this.filterData(this.data);
-    this.renderTable(filtered, "packages-table");
+    const totalPages = Math.ceil(filtered.length / LIST_CONFIG.perPage);
+
+    // Clamp: halaman aktif bisa "kelebihan" setelah filter/pencarian
+    // mempersempit hasil — pastikan tetap dalam rentang valid.
+    if (this.currentPage > totalPages) this.currentPage = totalPages || 1;
+    if (this.currentPage < 1) this.currentPage = 1;
+
+    const start = (this.currentPage - 1) * LIST_CONFIG.perPage;
+    const pageItems = filtered.slice(start, start + LIST_CONFIG.perPage);
+
+    this.renderTable(pageItems, "packages-table");
     document
       .getElementById("packages-empty")
       .classList.toggle("hidden", filtered.length > 0);
+
+    this.renderPagination(totalPages);
+  },
+
+  /* BARU: render tombol paginasi ke #pagination.
+   * Format: ‹  [1] … [4] [5] [6] … [40]  ›
+   * - Nomor di sekitar halaman aktif selalu terlihat (aktif ± 1).
+   * - Halaman pertama & terakhir selalu terlihat.
+   * - Celah antar nomor diganti "…".
+   * - Panah ‹ › untuk mundur/maju; disabled di ujung.
+   * - Disembunyikan bila total halaman ≤ 1 (termasuk hasil kosong). */
+  renderPagination: function (totalPages) {
+    const container = document.getElementById("pagination");
+    if (!container) return; // elemen belum ada di HTML → lewati diam-diam
+
+    // Sembunyikan bila tak perlu paginasi
+    container.classList.toggle("hidden", totalPages <= 1);
+    if (totalPages <= 1) {
+      container.innerHTML = "";
+      return;
+    }
+
+    /* Kumpulan nomor halaman yang ditampilkan:
+       1, totalPages, aktif±1 — plus cadangan agar jendela tidak "lompat"
+       saat aktif dekat ujung (2..4 atau total-3..total-1). */
+    const pages = new Set([
+      1,
+      totalPages,
+      this.currentPage - 1,
+      this.currentPage,
+      this.currentPage + 1,
+    ]);
+    if (this.currentPage <= 3) [2, 3, 4].forEach((p) => pages.add(p));
+    if (this.currentPage >= totalPages - 2)
+      [totalPages - 1, totalPages - 2, totalPages - 3].forEach((p) =>
+        pages.add(p),
+      );
+
+    const sorted = [...pages]
+      .filter((p) => p >= 1 && p <= totalPages)
+      .sort((a, b) => a - b);
+
+    /* Panah kiri (prev) */
+    let html =
+      `<button class="page-btn" data-page="${this.currentPage - 1}" type="button" ` +
+      `aria-label="Previous page" ${this.currentPage === 1 ? "disabled" : ""}>` +
+      `<i class="ph ph-caret-left" aria-hidden="true"></i></button>`;
+
+    /* Nomor halaman + elipsis di celah yang tidak berurutan */
+    let prev = 0;
+    sorted.forEach((p) => {
+      if (p - prev > 1) html += '<span class="page-ellipsis">…</span>';
+      html +=
+        `<button class="page-btn ${p === this.currentPage ? "active" : ""}" ` +
+        `data-page="${p}" type="button" ` +
+        `${p === this.currentPage ? 'aria-current="page"' : ""}>${p}</button>`;
+      prev = p;
+    });
+
+    /* Panah kanan (next) */
+    html +=
+      `<button class="page-btn" data-page="${this.currentPage + 1}" type="button" ` +
+      `aria-label="Next page" ${this.currentPage === totalPages ? "disabled" : ""}>` +
+      `<i class="ph ph-caret-right" aria-hidden="true"></i></button>`;
+
+    container.innerHTML = html;
   },
 
   renderTable: function (packages, tableId) {
@@ -386,9 +516,6 @@ const app = {
     }
 
     const folderUrl = this.buildFolderUrl(pkg);
-    // Ikon brand menyesuaikan provider repo (GitHub/GitLab)
-    const repoIcon =
-      REPO_CONFIG.provider === "gitlab" ? "ph-gitlab-logo" : "ph-github-logo";
 
     const installCmd = [
       `git clone ${this.urls.web}`,
@@ -415,7 +542,7 @@ const app = {
                 </div>
                 <div class="detail-actions">
                     <a href="${folderUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
-                        <i class="ph ${repoIcon}" aria-hidden="true"></i> Source Folder
+                        <i class="ph ph-github-logo" aria-hidden="true"></i> Source Folder
                     </a>
                 </div>
             </div>

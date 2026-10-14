@@ -444,3 +444,58 @@ footer {
 
     .detail-title h1 { font-size: 1.5rem; }
 }
+
+/* ================= PAGINATION (di-generate script.js) ================= */
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+/* .pagination.hidden harus menang atas display:flex di atas */
+.pagination.hidden {
+    display: none;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: .875rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.page-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #052e16; /* teks gelap di atas tombol hijau */
+    font-weight: 600;
+}
+
+.page-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+.page-ellipsis {
+    color: var(--text-muted);
+    padding: 0 2px;
+    user-select: none;
+}
