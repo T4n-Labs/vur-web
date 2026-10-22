@@ -144,6 +144,7 @@ const app = {
     this.isLoaded = true;
     this.updateStats();
     this.buildCategoryFilters();
+    this.archsCategory();
   },
 
   updateStats: function () {
@@ -163,6 +164,24 @@ const app = {
     document.getElementById("category-filters").innerHTML =
       '<button class="filter-btn active" data-cat="all" type="button">All</button>' +
       cats
+        .map(
+          (c) =>
+            `<button class="filter-btn" data-cat="${escapeHtml(c)}" type="button">${escapeHtml(c)}</button>`,
+        )
+        .join("");
+  },
+
+  archsCategory: function () {
+    const archs = [
+      ...new Set(
+        this.data.flatMap((p) =>
+          Array.isArray(p.archs) ? p.archs : [p.archs || "unknown"],
+        ),
+      ),
+    ].sort();
+    document.getElementById("archs").innerHTML =
+      '<button class="filter-btn active" data-cat="all" type="button">All</button>' +
+      archs
         .map(
           (c) =>
             `<button class="filter-btn" data-cat="${escapeHtml(c)}" type="button">${escapeHtml(c)}</button>`,

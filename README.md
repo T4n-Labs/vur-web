@@ -1,9 +1,9 @@
 # VUR Website
 
-Website resmi untuk **VUR (Void User Repository)** — indeks paket komunitas untuk Void Linux.
+Website resmi untuk **VUR (Void User Repository)** - indeks paket komunitas untuk Void Linux.
 Website ini menyediakan cara cepat dan sederhana untuk mencari, melihat, dan mengakses paket yang tersedia di repository **VUR**.
 
-VUR-Website : https://t4n-labs.github.io/vur-web
+VUR-Website : https://vur.t4nlabs.web.id
 
 ## Tentang VUR
 
@@ -43,6 +43,6 @@ Project ini dirilis dengan lisensi **MIT License**.
 
 <div align=center>
 
-@[T4n Labs](https://github.com/T4n-Labs) - @[Gh0sT4n](https://github.com/gh0st4n)
+@[T4n Labs](https://github.com/T4n-Labs)
 
 </div>
