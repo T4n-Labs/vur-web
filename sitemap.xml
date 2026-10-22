@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sitemap untuk subdomain vur.t4nlabs.web.id
+     Situs ini SPA hash-routing (#home/#packages/#package/...), sehingga
+     HANYA URL root yang bisa diindeks — fragment tidak dikirim ke server.
+     Letakkan di ROOT repo GitHub Pages (sejajar index.html). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://vur.t4nlabs.web.id/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

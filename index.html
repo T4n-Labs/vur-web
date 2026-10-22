@@ -1,35 +1,79 @@
 <!DOCTYPE html>
-<html lang="id">
+<!-- FIX SEO: lang="id" -> "en" — seluruh UI, konten, dan meta berbahasa
+     Inggris; target audiens komunitas Void Linux global. -->
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <!-- FIX: "maximum-scale=1.0, user-scalable=no" dihapus — memblokir zoom
          adalah anti-pola aksesibilitas (WCAG). -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VUR - Void User Repository</title>
+    <title>VUR - Void User Repository | Community Package Index</title>
 
-    <meta name="description" content="Void User Repository | Community Repository">
+    <meta name="description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
+    <meta name="author" content="T4n Labs">
+    <meta name="keywords" content="void user repository, VUR, void linux packages, community repository, xbps packages, void linux package index">
+    <!-- Crawling: indeks penuh + preview gambar besar di hasil pencarian -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <!-- Canonical: cegah duplikasi *.github.io vs custom domain -->
+    <link rel="canonical" href="https://vur.t4nlabs.web.id/">
     <!-- Warna address bar di browser mobile -->
     <meta name="theme-color" content="#1a1a1a">
 
     <!-- FIX: favicon sebelumnya href="assets/" (folder kosong → broken).
-         Sementara pakai logo.jpg; idealnya sediakan .ico / .png 32x32. -->
-    <link rel="icon" type="image/jpeg" href="assets/logo.png">
+         Sementara pakai logo.png (type diperbaiki jpeg → png); idealnya
+         sediakan .ico / .png 32x32. -->
+    <link rel="icon" type="image/png" href="assets/logo.png">
 
-    <!-- FIX: og:site_name sebelumnya "Gh0sT4n Portfolio" (sisa project lain).
-         Open Graph dilengkapi agar preview share media sosial benar. -->
+    <!-- ===== OPEN GRAPH: preview share WA/Discord/FB (locale EN) ===== -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="VUR - Void User Repository">
-    <meta property="og:title" content="VUR - Void User Repository">
-    <meta property="og:description" content="A fast, minimalist, and modern community package index for Void Linux.">
+    <meta property="og:title" content="VUR - Void User Repository | Community Package Index">
+    <meta property="og:description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
     <meta property="og:url" content="https://vur.t4nlabs.web.id/">
     <meta property="og:image" content="https://vur.t4nlabs.web.id/assets/logo.png">
+    <meta property="og:locale" content="en_US">
 
+    <!-- ===== TWITTER CARD ===== -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="VUR - Void User Repository | Community Package Index">
+    <meta name="twitter:description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
+    <meta name="twitter:image" content="https://vur.t4nlabs.web.id/assets/logo.png">
+
+    <!-- ===== STRUCTURED DATA (schema.org JSON-LD) =====
+         WebSite + Organization. Organization memakai @id yang SAMA
+         dengan situs utama (t4nos.t4nlabs.web.id) agar entitas Google
+         tergabung antar-subdomain.
+         Catatan: SearchAction (sitelinks search box) BELUM dipasang —
+         state pencarian belum disinkronkan ke URL hash oleh script.js.
+         Aktifkan setelah router mendukung mis. #packages?q=... -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "VUR - Void User Repository",
-      "url": "https://vur.t4nlabs.web.id"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://vur.t4nlabs.web.id/#website",
+          "name": "VUR - Void User Repository",
+          "alternateName": "VUR",
+          "url": "https://vur.t4nlabs.web.id/",
+          "inLanguage": "en",
+          "description": "A fast, minimalist, and modern community package index for Void Linux.",
+          "publisher": { "@id": "https://t4nos.t4nlabs.web.id/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://t4nos.t4nlabs.web.id/#organization",
+          "name": "T4n Labs",
+          "url": "https://t4nos.t4nlabs.web.id/",
+          "logo": "https://vur.t4nlabs.web.id/assets/logo.png",
+          "sameAs": [
+            "https://github.com/T4n-Labs",
+            "https://gitlab.com/t4n-labs",
+            "https://www.instagram.com/t4n_labs",
+            "https://discord.gg/yM5s7RWBxq"
+          ]
+        }
+      ]
     }
     </script>
 
@@ -41,15 +85,32 @@
     <!-- Ikon: Phosphor SAJA. Font Awesome dihapus (redundan — 2 library dimuat
          hanya demi 1 ikon GitHub). Versi di-pin agar class ikon tidak berubah
          mendadak; update versinya secara sadar. -->
+    <!-- SEO/performa: preconnect ke CDN unpkg agar ikon termuat lebih cepat -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-    <!-- Pesan untuk pengunjung tanpa JavaScript -->
+    <!-- Pesan untuk pengunjung tanpa JavaScript.
+         SEO fallback: deskripsi + link inti agar crawler dan pengunjung
+         non-JS tetap mendapat konten bermakna (SPA merender via JS). -->
     <noscript>
         <p class="noscript-msg">This site requires JavaScript to load the package index.</p>
+        <div style="max-width:720px; margin:2rem auto; padding:1.5rem; border:1px solid #333; border-radius:12px;">
+            <h2>VUR - Void User Repository</h2>
+            <p>
+                VUR is a fast, minimalist, and modern community package index
+                for Void Linux, maintained by T4n Labs. Browse community
+                packages, filter by category, and search by name, description,
+                or category.
+            </p>
+            <ul>
+                <li><a href="https://github.com/T4n-Labs/vur">Package data &amp; source code (GitHub)</a></li>
+                <li><a href="https://t4nos.t4nlabs.web.id/">T4n OS - Void Linux-based distribution</a></li>
+            </ul>
+        </div>
     </noscript>
 
     <!-- ================= HEADER / NAVBAR ================= -->
@@ -178,21 +239,14 @@
                 </table>
             </div>
 
-                        <div class="table-container">
-                <table id="packages-table">
-                    <!-- ... thead & tbody tetap sama ... -->
-                </table>
-            </div>
+            <!-- FIX SEO: duplikat <div class="table-container"> berisi
+                 <table id="packages-table"> kedua dihapus — ID duplikat
+                 adalah HTML tidak valid dan membingungkan crawler. -->
 
             <!-- BARU: Paginasi — tombol halaman di-generate otomatis oleh
                  script.js (renderPagination). Disembunyikan bila hasil
                  hanya 1 halaman. -->
             <div id="pagination" class="pagination"></div>
-
-            <div id="packages-empty" class="empty-state hidden">
-                <i class="ph ph-ghost" aria-hidden="true"></i>
-                <p>No packages match your filters or search.</p>
-            </div>
 
             <div id="packages-empty" class="empty-state hidden">
                 <i class="ph ph-ghost" aria-hidden="true"></i>
@@ -216,12 +270,14 @@
     <!-- ================= FOOTER ================= -->
     <footer>
         <div class="container">
-            <p>&copy; <span data-year></span> T4n Labs - VUR Project. Made for the Void Linux Community.</p>
+            <p>&copy; <span data-year></span> <a href="https://t4nlabs.web.id/">T4n Labs</a> - VUR Project. Made for the <a href="https://voidlinux.org/" target="_blank" rel="noopener noreferrer">Void Linux</a> Community.</p>
             <p class="footer-note">
                 Data sourced from
                 <a href="https://github.com/T4n-Labs/vur"
                 data-repo-link data-repo-label
                 target="_blank" rel="noopener noreferrer">T4n-Labs/vur</a>
+                · Explore: <a href="https://t4nos.t4nlabs.web.id/">T4n OS</a> ·
+                <a href="https://repo.t4nlabs.web.id/">Package Repository</a>
             </p>
         </div>
     </footer>
