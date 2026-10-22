@@ -9,9 +9,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VUR - Void User Repository | Community Package Index</title>
 
-    <meta name="description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
+    <meta name="description" content="VUR (Void User Repository) is a fast, minimalist package index for Void Linux. Search, browse, and explore community packages by category and architecture.">
     <meta name="author" content="T4n Labs">
-    <meta name="keywords" content="void user repository, VUR, void linux packages, community repository, xbps packages, void linux package index">
+    <meta name="keywords" content="void user repository, VUR, void linux packages, community repository, xbps packages, void linux package index, x86_64, aarch64, musl">
     <!-- Crawling: indeks penuh + preview gambar besar di hasil pencarian -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <!-- Canonical: cegah duplikasi *.github.io vs custom domain -->
@@ -28,7 +28,7 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="VUR - Void User Repository">
     <meta property="og:title" content="VUR - Void User Repository | Community Package Index">
-    <meta property="og:description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
+    <meta property="og:description" content="VUR (Void User Repository) is a fast, minimalist package index for Void Linux. Search, browse, and explore community packages by category and architecture.">
     <meta property="og:url" content="https://vur.t4nlabs.web.id/">
     <meta property="og:image" content="https://vur.t4nlabs.web.id/assets/logo.png">
     <meta property="og:locale" content="en_US">
@@ -36,7 +36,7 @@
     <!-- ===== TWITTER CARD ===== -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="VUR - Void User Repository | Community Package Index">
-    <meta name="twitter:description" content="VUR (Void User Repository) is a fast, minimalist community package index for Void Linux. Search, browse, and explore community packages by category.">
+    <meta name="twitter:description" content="VUR (Void User Repository) is a fast, minimalist package index for Void Linux. Search, browse, and explore community packages by category and architecture.">
     <meta name="twitter:image" content="https://vur.t4nlabs.web.id/assets/logo.png">
 
     <!-- ===== STRUCTURED DATA (schema.org JSON-LD) =====
@@ -103,8 +103,8 @@
             <p>
                 VUR is a fast, minimalist, and modern community package index
                 for Void Linux, maintained by T4n Labs. Browse community
-                packages, filter by category, and search by name, description,
-                or category.
+                packages, filter by category or architecture, and search by
+                name, description, or category.
             </p>
             <ul>
                 <li><a href="https://github.com/T4n-Labs/vur">Package data &amp; source code (GitHub)</a></li>
@@ -222,8 +222,13 @@
                 <!-- Tombol kategori di-generate OTOMATIS oleh script.js dari
                      data packages.json — menambah kategori baru di repo tidak
                      perlu mengedit HTML/JS lagi. -->
-                <div class="category-filters" id="category-filters"></div>
-                <div class="archs" id="archs"></div>
+                <div class="category-filters" id="category-filters" role="group"
+                     aria-label="Filter by category"></div>
+                <!-- BARU: baris filter arsitektur (di bawah kategori) — tombol
+                     di-generate script.js (archsCategory) dari field "archs"
+                     packages.json; state filter disimpan di app.selectedArch -->
+                <div class="archs" id="archs" role="group"
+                     aria-label="Filter by architecture"></div>
             </div>
 
             <div class="table-container">
@@ -234,6 +239,11 @@
                             <th>Version</th>
                             <th class="col-cat">Category</th>
                             <th>Description</th>
+                            <!-- BARU: kolom daftar arsitektur (badge per paket,
+                                 dirender script.js dari field "archs") —
+                                 disembunyikan otomatis di layar <= 768px,
+                                 info lengkap tetap ada di halaman detail -->
+                            <th class="col-archs">Architectures</th>
                         </tr>
                     </thead>
                     <tbody><!-- Diisi oleh script.js --></tbody>

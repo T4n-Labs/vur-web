@@ -24,7 +24,12 @@
  *         "version": "1.2.3",     // opsional
  *         "description": "...",   // opsional
  *         "category": "extra",    // opsional — folder repo & tombol filter
- *         "maintainer": "..."     // opsional
+ *         "archs": ["x86_64"],    // opsional — daftar arsitektur yang didukung
+ *                                 //         (filter arch + kolom badge di tabel
+ *                                 //         list + tabel di halaman detail)
+ *         "maintainer": "...",    // opsional — tampil di meta detail
+ *         "distributor": "...",   // opsional — tampil di samping maintainer
+ *         "homepage": "..."       // opsional (belum ditampilkan di UI)
  *       }
  *     ]
  *     Urutan array dianggap "terbaru dulu" (paket teratas = terbaru).
@@ -110,6 +115,7 @@ const app = {
   isLoaded: false, // true setelah fetch berhasil
   currentSearch: "", // kata kunci pencarian aktif (lowercase)
   selectedCategory: "all", // kategori filter aktif di view Packages
+  selectedArch: "all", // BARU: arsitektur filter aktif di view Packages
   currentPage: 1, // halaman paginasi aktif di view Packages (mulai dari 1)
   urls: buildRepoUrls(REPO_CONFIG),
   baseTitle: document.title,
@@ -171,6 +177,9 @@ const app = {
         .join("");
   },
 
+  /* BARU: tombol filter arsitektur dari field "archs" packages.json.
+   * Tombol memakai atribut data-arch (BUKAN data-cat) agar tidak bentrok
+   * dengan filter kategori — keduanya sama-sama bergaya .filter-btn. */
   archsCategory: function () {
     const archs = [
       ...new Set(
@@ -180,11 +189,11 @@ const app = {
       ),
     ].sort();
     document.getElementById("archs").innerHTML =
-      '<button class="filter-btn active" data-cat="all" type="button">All</button>' +
+      '<button class="filter-btn active" data-arch="all" type="button">All</button>' +
       archs
         .map(
           (c) =>
-            `<button class="filter-btn" data-cat="${escapeHtml(c)}" type="button">${escapeHtml(c)}</button>`,
+            `<button class="filter-btn" data-arch="${escapeHtml(c)}" type="button">${escapeHtml(c)}</button>`,
         )
         .join("");
   },
@@ -208,7 +217,8 @@ const app = {
     // SATU listener klik (event delegation) untuk semua elemen dinamis:
     //   [data-action]  -> tombol aksi (copy / reload / back)
     //   .page-btn      -> BARU: tombol paginasi (nomor halaman / panah)
-    //   .filter-btn    -> filter kategori
+    //   [data-cat]     -> filter kategori (All/core/extra/...)
+    //   [data-arch]    -> BARU: filter arsitektur (All/x86_64/aarch64/...)
     //   tr[data-pkg]   -> baris tabel -> buka detail paket
     document.addEventListener("click", (e) => {
       const actionEl = e.target.closest("[data-action]");
@@ -227,10 +237,27 @@ const app = {
         return;
       }
 
-      const filterBtn = e.target.closest(".filter-btn");
-      if (filterBtn) {
+      // BARU: filter arsitektur — dicek SEBELUM branch kategori karena
+      // tombol arch juga bergaya .filter-btn tetapi punya data-arch.
+      const archBtn = e.target.closest("[data-arch]");
+      if (archBtn) {
+        // Reset "active" HANYA di baris arch (#archs), bukan global —
+        // supaya pilihan kategori tidak ikut hilang.
         document
-          .querySelectorAll(".filter-btn")
+          .querySelectorAll("#archs .filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        archBtn.classList.add("active");
+        this.selectedArch = archBtn.dataset.arch;
+        this.currentPage = 1; // arch berubah → kembali ke halaman 1
+        this.renderPackagesList();
+        return;
+      }
+
+      const filterBtn = e.target.closest("[data-cat]");
+      if (filterBtn) {
+        // Reset "active" HANYA di baris kategori (#category-filters).
+        document
+          .querySelectorAll("#category-filters .filter-btn")
           .forEach((b) => b.classList.remove("active"));
         // FIX: pakai hasil closest(), bukan e.target — aman walau
         // suatu saat tombol berisi elemen lain (ikon, span, dsb.)
@@ -353,16 +380,20 @@ const app = {
   resetListFilters: function () {
     this.currentSearch = "";
     this.selectedCategory = "all";
+    this.selectedArch = "all"; // BARU: filter arsitektur ikut direset
     this.currentPage = 1; // BARU: paginasi ikut direset
     document.getElementById("list-search").value = "";
     document
-      .querySelectorAll(".filter-btn")
+      .querySelectorAll("#category-filters .filter-btn")
       .forEach((b) => b.classList.toggle("active", b.dataset.cat === "all"));
+    document
+      .querySelectorAll("#archs .filter-btn")
+      .forEach((b) => b.classList.toggle("active", b.dataset.arch === "all"));
   },
 
   /* ======================= RENDER ======================= */
 
-  /* Filter untuk view Packages: pencarian + kategori. */
+  /* Filter untuk view Packages: pencarian + kategori + arsitektur (BARU). */
   filterData: function (dataset) {
     const q = this.currentSearch;
     return dataset.filter((p) => {
@@ -372,7 +403,12 @@ const app = {
         (p.category || "").toLowerCase().includes(q);
       const matchesCategory =
         this.selectedCategory === "all" || p.category === this.selectedCategory;
-      return matchesSearch && matchesCategory;
+      // BARU: paket lolos bila arch terpilih ada di daftar archs-nya
+      // ("all" = terima semua; paket tanpa field archs lolos hanya saat All).
+      const matchesArch =
+        this.selectedArch === "all" ||
+        (Array.isArray(p.archs) && p.archs.includes(this.selectedArch));
+      return matchesSearch && matchesCategory && matchesArch;
     });
   },
 
@@ -405,7 +441,7 @@ const app = {
     const start = (this.currentPage - 1) * LIST_CONFIG.perPage;
     const pageItems = filtered.slice(start, start + LIST_CONFIG.perPage);
 
-    this.renderTable(pageItems, "packages-table");
+    this.renderTable(pageItems, "packages-table", { showArchs: true });
     document
       .getElementById("packages-empty")
       .classList.toggle("hidden", filtered.length > 0);
@@ -477,24 +513,44 @@ const app = {
     container.innerHTML = html;
   },
 
-  renderTable: function (packages, tableId) {
+  /* BARU: badge arsitektur untuk kolom "Architectures" di tabel list.
+   * Satu badge pill per arch; paket tanpa field archs tampil tanda "—"
+   * (bukan sel kosong) agar tidak terlihat seperti data rusak. */
+  renderArchBadges: function (pkg) {
+    const archs = Array.isArray(pkg.archs) ? pkg.archs : [];
+    if (archs.length === 0) return '<span class="arch-none">—</span>';
+    return archs
+      .map((a) => `<span class="arch-badge">${escapeHtml(a)}</span>`)
+      .join("");
+  },
+
+  /* renderTable dipakai BERSAMA oleh Home (recent-table) dan Package
+   * Index (packages-table). Opts.showArchs=true menambah kolom
+   * "Architectures" — hanya dipakai view Packages; Home sengaja tetap
+   * 4 kolom agar ringkas. */
+  renderTable: function (packages, tableId, opts = {}) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = "";
+    const showArchs = !!opts.showArchs;
 
     if (packages.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="4" class="table-empty">No data.</td></tr>';
+      const colspan = showArchs ? 5 : 4;
+      tbody.innerHTML = `<tr><td colspan="${colspan}" class="table-empty">No data.</td></tr>`;
       return;
     }
 
     packages.forEach((pkg) => {
       const tr = document.createElement("tr");
       tr.dataset.pkg = pkg.name; // dipakai oleh event delegation klik
+      // BARU: sel archs hanya dirender untuk tabel yang memintanya
+      const archsCell = showArchs
+        ? `<td class="col-archs"><div class="pkg-archs">${this.renderArchBadges(pkg)}</div></td>`
+        : "";
       tr.innerHTML = `
                 <td><a class="pkg-name" href="#package/${encodeURIComponent(pkg.name)}">${escapeHtml(pkg.name)}</a></td>
                 <td><span class="pkg-ver">${escapeHtml(pkg.version || "N/A")}</span></td>
                 <td class="col-cat"><span class="pkg-cat">${escapeHtml(pkg.category || "unknown")}</span></td>
-                <td class="pkg-desc">${escapeHtml(pkg.description || "No description")}</td>`;
+                <td class="pkg-desc">${escapeHtml(pkg.description || "No description")}</td>${archsCell}`;
       tbody.appendChild(tr);
     });
     // CATATAN aksesibilitas: nama paket sengaja dibungkus <a> (bukan cuma
@@ -510,6 +566,36 @@ const app = {
     // encodeURIComponent per-segment agar karakter spesial aman di URL
     const segments = this.buildPkgPath(pkg).split("/").map(encodeURIComponent);
     return `${this.urls.tree}/${segments.join("/")}`;
+  },
+
+  /* BARU: tabel "Supported Architectures" untuk view detail — tampil
+   * berdampingan dengan Description (grid 2 kolom, lihat .detail-info-grid). */
+  renderArchsTable: function (pkg) {
+    const archs = Array.isArray(pkg.archs) ? pkg.archs : [];
+    if (archs.length === 0) {
+      return '<p class="detail-desc">Architecture information not available.</p>';
+    }
+    const rows = archs
+      .map(
+        (a) => `
+                    <tr>
+                        <td class="arch-name">${escapeHtml(a)}</td>
+                        <td class="arch-status"><i class="ph ph-check-circle" aria-hidden="true"></i> Supported</td>
+                    </tr>`,
+      )
+      .join("");
+    return `
+                    <div class="table-container archs-table-container">
+                        <table class="archs-table">
+                            <thead>
+                                <tr>
+                                    <th>Architecture</th>
+                                    <th>Support</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
   },
 
   renderDetail: function (name) {
@@ -557,6 +643,7 @@ const app = {
                         <span class="pkg-cat">${escapeHtml(pkg.category || "unknown")}</span>
                         <span class="meta-item"><i class="ph ph-tag" aria-hidden="true"></i> Version: <strong>${escapeHtml(pkg.version || "N/A")}</strong></span>
                         <span class="meta-item"><i class="ph ph-user" aria-hidden="true"></i> Maintainer: <strong>${escapeHtml(pkg.maintainer || "Unknown")}</strong></span>
+                        <span class="meta-item"><i class="ph ph-users" aria-hidden="true"></i> Distributor: <strong>${escapeHtml(pkg.distributor || "Unknown")}</strong></span>
                     </div>
                 </div>
                 <div class="detail-actions">
@@ -566,9 +653,15 @@ const app = {
                 </div>
             </div>
 
-            <div class="detail-section">
-                <h2>Description</h2>
-                <p class="detail-desc">${escapeHtml(pkg.description || "No description available")}</p>
+            <div class="detail-section detail-info-grid">
+                <div>
+                    <h2>Description</h2>
+                    <p class="detail-desc">${escapeHtml(pkg.description || "No description available")}</p>
+                </div>
+                <div>
+                    <h2>Supported Architectures</h2>
+                    ${this.renderArchsTable(pkg)}
+                </div>
             </div>
 
             <div class="detail-section">

@@ -733,3 +733,82 @@ footer {
   padding: 0 2px;
   user-select: none;
 }
+
+/* ============ DETAIL: DESKRIPSI + TABEL ARSITEKTUR (BARU) ============ */
+/* Description & tabel "Supported Architectures" tampil berdampingan
+   (grid 2 kolom) dan menyusun vertikal di layar sempit. */
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Override table { min-width: 600px } global agar muat di kolom grid */
+.archs-table {
+  min-width: 0;
+}
+
+.archs-table th,
+.archs-table td {
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+}
+
+.archs-table .arch-name {
+  font-family: var(--font-code);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.archs-table .arch-status {
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.archs-table .arch-status i {
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+@media (max-width: 768px) {
+  .detail-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ LIST: KOLOM ARSITEKTUR (BARU) ============ */
+/* Daftar arch per paket tampil sebagai badge pill kecil (font mono,
+   warna accent) yang membungkus dalam sel. Kolom disembunyikan di
+   layar <= 768px agar baris tidak terlalu tinggi — informasi lengkap
+   tetap tersedia di halaman detail & tombol filter arch. */
+.pkg-archs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 240px;
+}
+
+.arch-badge {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  background: rgba(191, 167, 111, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(191, 167, 111, 0.35);
+  border-radius: 99px;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Paket tanpa field archs — tanda "—" redup */
+.arch-none {
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .col-archs {
+    display: none;
+  }
+}
